@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>incogame</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="mainMenu" class="screen">
+        <h1>ComfyGame</h1>
+        <button id="startButton">Start Game</button>
+        <button id="shopButton">Shop</button>
+        <div class="holderamb-credit">holderamb</div>
+    </div>
+
+    <div id="shopScreen" class="screen" style="display: none;">
+        <h2>Shop</h2>
+        <div id="totalPointsDisplay">Total Points: <span id="playerTotalPoints">0</span></div>
+        <div id="skinsContainer">
+            <!-- Скины будут добавлены сюда через JavaScript -->
+        </div>
+        <button id="backToMenuButton">Back to Menu</button>
+    </div>
+
+    <div id="gameContainer" style="display: none;">
+        <div id="gameArea">
+            <div id="playerCloud">
+                <!-- Изображение облака будет меняться через JS/CSS -->
+            </div>
+            <!-- Падающие логотипы -->
+        </div>
+        <div id="scoreBoard">Score: <span id="score">0</span></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

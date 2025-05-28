@@ -46,9 +46,9 @@ let isGameOver = false;
 // --- Данные игрока и скины ---
 const SKINS_DATA = [
     { id: 'default_cloud', name: 'Default Cloud', price: 0, image: 'cloud.png' }, // Убедитесь, что 'cloud.png' - ваш базовый скин
-    { id: 'skin1_cloud', name: 'Aqua Burst', price: 1000, image: 'cloud_skin1.png' }, // Замените на ваши имена файлов скинов
-    { id: 'skin2_cloud', name: 'Golden Haze', price: 2000, image: 'cloud_skin2.png' },
-    { id: 'skin3_cloud', name: 'Shadow Puff', price: 3000, image: 'cloud_skin3.png' }
+    { id: 'skin1_cloud', name: 'Aqua Burst', price: 500, image: 'cloud_skin1.png' }, // Замените на ваши имена файлов скинов
+    { id: 'skin2_cloud', name: 'Golden Haze', price: 700, image: 'cloud_skin2.png' },
+    { id: 'skin3_cloud', name: 'Shadow Puff', price: 1200, image: 'cloud_skin3.png' }
 ];
 
 let playerData = {

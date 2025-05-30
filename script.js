@@ -15,7 +15,7 @@ const playerCloud = document.getElementById('playerCloud');
 const scoreDisplay = document.getElementById('score');
 
 // --- Настройки игры (основные) ---
-let currentScore = 0; // Счет текущей игры
+let currentScore = 0;
 const playerSpeed = 25;
 const LOGO_WIDTH = 30;
 const LOGO_HEIGHT = 30;
@@ -33,31 +33,36 @@ const minLogoSpawnInterval = 250;
 
 let gameAreaWidth = 0;
 let gameAreaHeight = 0;
-let playerCloudWidth = 0;
+let playerCloudWidth = 0; 
 
-// !!! ЗАМЕНИТЕ НА ИМЕНА ВАШИХ ФАЙЛОВ ЛОГОТИПОВ ПАДАЮЩИХ !!!
-const fallingLogoImages = ['logo1.png', 'logo2.png', 'logo3.png']; // Например: ['apple_logo.png', 'android_logo.png']
+const fallingLogoImages = ['logo1.png', 'logo2.png', 'logo3.png'];
 
 let logoSpawnTimer;
 let fallSpeedUpTimer;
 let spawnRateUpTimer;
 let isGameOver = false;
 
-// --- Данные игрока и скины ---
 const SKINS_DATA = [
-    { id: 'default_cloud', name: 'Default Cloud', price: 0, image: 'cloud.png' }, // Убедитесь, что 'cloud.png' - ваш базовый скин
-    { id: 'skin1_cloud', name: 'Aqua Burst', price: 500, image: 'cloud_skin1.png' }, // Замените на ваши имена файлов скинов
-    { id: 'skin2_cloud', name: 'Golden Haze', price: 700, image: 'cloud_skin2.png' },
-    { id: 'skin3_cloud', name: 'Shadow Puff', price: 1200, image: 'cloud_skin3.png' }
+    { id: 'default_cloud', name: 'Default Cloud', price: 0, image: 'cloud.png' },
+    { id: 'skin1_cloud', name: 'Aqua Burst', price: 1, image: 'cloud_skin1.png' },
+    { id: 'skin2_cloud', name: 'Golden Haze', price: 2, image: 'cloud_skin2.png' },
+    { id: 'skin3_cloud', name: 'Shadow Puff', price: 3, image: 'cloud_skin3.png' },
+    { id: 'skin4_cloud', name: 'Crimson Flash', price: 4, image: 'cloud_skin4.png' },
+    { id: 'skin5_cloud', name: 'Emerald Mist', price: 5, image: 'cloud_skin5.png' }
 ];
 
 let playerData = {
     totalPoints: 0,
-    unlockedSkins: ['default_cloud'], // 'default_cloud' всегда разблокирован
+    unlockedSkins: ['default_cloud'],
     selectedSkinId: 'default_cloud'
 };
 
-// --- Функции localStorage ---
+// --- Настройки для "внутреннего" хитбокса облака ---
+// <<< УВЕЛИЧИВАЕМ ОТСТУПЫ ЗНАЧИТЕЛЬНО >>>
+const CLOUD_HITBOX_PADDING_X = 35; // Было 20, потом 30. Для облака 120px шириной, это оставит 120 - (2*35) = 50px ширины хитбокса.
+const CLOUD_HITBOX_PADDING_Y = 20; // Было 10, потом 15. Для облака 72px высотой, это оставит 72 - (2*20) = 32px высоты хитбокса.
+
+
 function savePlayerData() {
     try {
         localStorage.setItem('incogamePlayerData', JSON.stringify(playerData));
@@ -71,9 +76,8 @@ function loadPlayerData() {
         const savedData = localStorage.getItem('incogamePlayerData');
         if (savedData) {
             const parsedData = JSON.parse(savedData);
-            playerData = { ...playerData, ...parsedData }; // Слияние для сохранения новых полей, если данные старые
+            playerData = { ...playerData, ...parsedData }; 
             
-            // Гарантируем наличие и корректность ключевых полей
             if (!playerData.unlockedSkins || !Array.isArray(playerData.unlockedSkins)) {
                 playerData.unlockedSkins = ['default_cloud'];
             } else if (!playerData.unlockedSkins.includes('default_cloud')) {
@@ -81,42 +85,35 @@ function loadPlayerData() {
             }
 
             if (!playerData.selectedSkinId || !SKINS_DATA.find(s => s.id === playerData.selectedSkinId)) {
-                playerData.selectedSkinId = 'default_cloud'; // Если выбранный скин некорректен, сброс на дефолтный
+                playerData.selectedSkinId = 'default_cloud';
             }
         }
     } catch (e) {
         console.error("Failed to load player data from localStorage:", e);
-        // В случае ошибки используем значения по умолчанию
         playerData = {
             totalPoints: 0,
             unlockedSkins: ['default_cloud'],
             selectedSkinId: 'default_cloud'
         };
     }
-    updatePlayerCloudSkin(); // Обновить скин облака при загрузке
+    updatePlayerCloudSkin();
 }
 
-// --- Управление экранами ---
 function showScreen(screenElement) {
     if (mainMenuScreen) mainMenuScreen.style.display = 'none';
     if (shopScreen) shopScreen.style.display = 'none';
     if (gameContainer) gameContainer.style.display = 'none';
     
     if (screenElement) {
-        screenElement.style.display = 'flex'; // Используем flex для центрирования содержимого экрана
+        screenElement.style.display = 'flex';
     } else {
-        console.error("Attempted to show a null or undefined screen element. Defaulting to main menu.");
-        if (mainMenuScreen) mainMenuScreen.style.display = 'flex'; // Fallback
+        if (mainMenuScreen) mainMenuScreen.style.display = 'flex';
     }
 }
 
-// --- Логика магазина ---
 function renderShop() {
-    if (!skinsContainer || !playerTotalPointsDisplay) {
-        console.error("Shop UI elements (skinsContainer or playerTotalPointsDisplay) not found.");
-        return;
-    }
-    skinsContainer.innerHTML = ''; // Очищаем предыдущие скины
+    if (!skinsContainer || !playerTotalPointsDisplay) return;
+    skinsContainer.innerHTML = '';
     playerTotalPointsDisplay.textContent = playerData.totalPoints;
 
     SKINS_DATA.forEach(skin => {
@@ -167,18 +164,15 @@ function renderShop() {
 
 function buySkin(skinId) {
     const skinToBuy = SKINS_DATA.find(s => s.id === skinId);
-    if (!skinToBuy) {
-        console.error(`Skin with id ${skinId} not found.`);
-        return;
-    }
+    if (!skinToBuy) return;
 
     if (playerData.totalPoints >= skinToBuy.price && !playerData.unlockedSkins.includes(skinId)) {
         playerData.totalPoints -= skinToBuy.price;
         playerData.unlockedSkins.push(skinId);
-        playerData.selectedSkinId = skinId; // Автоматически выбираем купленный скин
+        playerData.selectedSkinId = skinId; 
         savePlayerData();
-        updatePlayerCloudSkin(); // Обновляем скин игрока сразу
-        renderShop(); // Перерисовать магазин для обновления статуса кнопок
+        updatePlayerCloudSkin();
+        renderShop();
     } else if (playerData.unlockedSkins.includes(skinId)) {
         alert("Skin already unlocked!");
     } else {
@@ -191,49 +185,40 @@ function selectSkin(skinId) {
         playerData.selectedSkinId = skinId;
         savePlayerData();
         updatePlayerCloudSkin();
-        renderShop(); // Перерисовать магазин
+        renderShop();
     } else {
         alert("You need to unlock this skin first!");
     }
 }
 
 function updatePlayerCloudSkin() {
-    if (!playerCloud) {
-        // console.warn("playerCloud element not found during skin update, skipping.");
-        return;
-    }
+    if (!playerCloud) return;
     const selectedSkinData = SKINS_DATA.find(s => s.id === playerData.selectedSkinId);
     if (selectedSkinData) {
         playerCloud.style.backgroundImage = `url('${selectedSkinData.image}')`;
     } else {
-        // Если выбранный скин не найден (например, удален из SKINS_DATA), используем дефолтный
         const defaultSkin = SKINS_DATA[0];
         playerCloud.style.backgroundImage = `url('${defaultSkin.image}')`;
-        console.warn(`Selected skin ID '${playerData.selectedSkinId}' not found. Reverted to default skin '${defaultSkin.id}'.`);
-        playerData.selectedSkinId = defaultSkin.id; // Исправляем данные игрока
-        savePlayerData();
+        if (playerData.selectedSkinId !== defaultSkin.id) {
+            playerData.selectedSkinId = defaultSkin.id;
+            savePlayerData();
+        }
     }
 }
 
-
-// --- Управление облаком (игровое) ---
 document.addEventListener('keydown', (event) => {
-    if (isGameOver || !gameContainer || gameContainer.style.display === 'none') return; // Не двигать если не в игре
+    if (isGameOver || !gameContainer || gameContainer.style.display === 'none') return;
     if (!playerCloud) return;
     
     let playerLeftStyle = window.getComputedStyle(playerCloud).getPropertyValue('left');
     let playerLeft = parseInt(playerLeftStyle, 10);
 
-    // Если left не установлен (например, при первой загрузке до startGame),
-    // или если значение некорректно
     if (isNaN(playerLeft)) {
+        if(playerCloud) playerCloudWidth = playerCloud.offsetWidth; 
         if (typeof gameAreaWidth === 'number' && typeof playerCloudWidth === 'number' && gameAreaWidth > 0) {
              playerLeft = (gameAreaWidth / 2) - (playerCloudWidth / 2);
              playerCloud.style.left = playerLeft + 'px';
-        } else { 
-            // console.warn("Cannot determine playerLeft, dimensions unavailable.");
-            return; 
-        }
+        } else { return; }
     }
     const key = event.key.toLowerCase();
     const code = event.code;
@@ -252,15 +237,11 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// --- Логика падающих логотипов ---
 function createFallingLogo() {
     if (isGameOver || !gameArea) return;
     const logo = document.createElement('div');
     logo.classList.add('fallingLogo');
-    if (fallingLogoImages.length === 0) {
-        console.warn("No falling logo images defined in fallingLogoImages array.");
-        return; // Не создаем лого, если нет изображений
-    }
+    if (fallingLogoImages.length === 0) return;
     const randomLogoImage = fallingLogoImages[Math.floor(Math.random() * fallingLogoImages.length)];
     logo.style.backgroundImage = `url('${randomLogoImage}')`;
     const randomX = Math.floor(Math.random() * (gameAreaWidth - LOGO_WIDTH));
@@ -281,31 +262,68 @@ function moveLogo(logo) {
         if (logoTop < gameAreaHeight) {
             logoTop += logoFallSpeed;
             logo.style.top = logoTop + 'px';
-            if (checkCollision(playerCloud, logo)) {
+            if (checkCollision(playerCloud, logo)) { // Вызов checkCollision
                 if (!isGameOver) gameOver();
                 clearInterval(moveInterval);
                 if (logo.parentElement) logo.remove();
                 return;
             }
-        } else { // Логотип упал ниже экрана
+        } else {
             if (logo.parentElement) logo.remove();
             clearInterval(moveInterval);
             if (!isGameOver) updateCurrentScore(1);
         }
-    }, 20); // Интервал анимации падения
+    }, 20);
 }
 
+// --- ИЗМЕНЕННАЯ ФУНКЦИЯ ПРОВЕРКИ СТОЛКНОВЕНИЙ С ЛОГИРОВАНИЕМ ---
 function checkCollision(cloud, logo) {
-    if (!cloud || !logo) return false; // Проверка на существование элементов
+    if (!cloud || !logo) return false;
+    
     const cloudRect = cloud.getBoundingClientRect();
     const logoRect = logo.getBoundingClientRect();
-    return !(
-        cloudRect.top > logoRect.bottom ||
-        cloudRect.right < logoRect.left ||
-        cloudRect.bottom < logoRect.top ||
-        cloudRect.left > logoRect.right
+
+    const cloudHitbox = {
+        top: cloudRect.top + CLOUD_HITBOX_PADDING_Y,
+        bottom: cloudRect.bottom - CLOUD_HITBOX_PADDING_Y,
+        left: cloudRect.left + CLOUD_HITBOX_PADDING_X,
+        right: cloudRect.right - CLOUD_HITBOX_PADDING_X
+    };
+
+    if (cloudHitbox.left >= cloudHitbox.right || cloudHitbox.top >= cloudHitbox.bottom) {
+        // console.warn("Cloud hitbox is invalid, using full rect.");
+        const isCollidingFull = !(
+            cloudRect.top > logoRect.bottom ||
+            cloudRect.right < logoRect.left ||
+            cloudRect.bottom < logoRect.top ||
+            cloudRect.left > logoRect.right
+        );
+        if (isCollidingFull) {
+            console.log("--- COLLISION (Full Rect Fallback) ---");
+            console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
+            console.log("Logo Rect:", JSON.stringify(logoRect));
+        }
+        return isCollidingFull;
+    }
+    
+    const isCollidingPadded = !(
+        cloudHitbox.top > logoRect.bottom ||
+        cloudHitbox.right < logoRect.left ||
+        cloudHitbox.bottom < logoRect.top ||
+        cloudHitbox.left > logoRect.right
     );
+
+    if (isCollidingPadded) { // <<< ЛОГИРОВАНИЕ ТОЛЬКО ПРИ ОБНАРУЖЕНИИ СТОЛКНОВЕНИЯ
+        console.log("--- COLLISION DETECTED (Padded Hitbox) ---");
+        console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
+        console.log("Cloud Padded Hitbox:", JSON.stringify(cloudHitbox));
+        console.log("Logo Rect:", JSON.stringify(logoRect));
+        console.log("Current Score:", currentScore);
+    }
+    
+    return isCollidingPadded;
 }
+// --- КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ ---
 
 function updateCurrentScore(points) {
     currentScore += points;
@@ -320,16 +338,13 @@ function increaseFallSpeed() {
 function increaseSpawnRate() {
     if (isGameOver) return;
     currentLogoSpawnInterval = Math.max(minLogoSpawnInterval, currentLogoSpawnInterval - spawnIntervalDecreaseAmount);
-    // Перезапускаем таймер создания логотипов с новым, уменьшенным интервалом
     clearInterval(logoSpawnTimer);
     logoSpawnTimer = setInterval(createFallingLogo, currentLogoSpawnInterval);
 }
 
-// --- Логика игры (старт/конец) ---
 function initGameScreen() {
     if (!gameContainer || !playerCloud || !gameArea || !scoreDisplay) {
-        console.error("Cannot initialize game screen, one or more core game elements are missing.");
-        showScreen(mainMenuScreen); // Вернуться в меню, если что-то не так
+        showScreen(mainMenuScreen);
         return;
     }
     showScreen(gameContainer);
@@ -340,31 +355,30 @@ function initGameScreen() {
     logoFallSpeed = logoFallSpeedStart;
     currentLogoSpawnInterval = logoSpawnIntervalStart;
 
-    // Обновляем размеры, если они не были заданы или изменились (например, при первом запуске)
     gameAreaWidth = gameArea.offsetWidth;
     gameAreaHeight = gameArea.offsetHeight;
-    playerCloudWidth = playerCloud.offsetWidth;
     
-    updatePlayerCloudSkin(); // Устанавливаем выбранный скин перед началом игры
+    if (playerCloud) {
+        playerCloudWidth = playerCloud.offsetWidth;
+    } else {
+        playerCloudWidth = 120; 
+        console.warn("playerCloud not found during initGameScreen, using default width 120px.");
+    }
+    
+    updatePlayerCloudSkin();
 
-    // Установка начальной позиции облака
     if (typeof gameAreaWidth === 'number' && typeof playerCloudWidth === 'number' && gameAreaWidth > 0) {
         const initialPlayerLeft = (gameAreaWidth / 2) - (playerCloudWidth / 2);
         playerCloud.style.left = initialPlayerLeft + 'px';
-    } else {
-         console.warn("Could not set initial player position due to invalid/zero dimensions for gameArea or playerCloud.");
     }
 
-    // Убираем все старые логотипы, если они есть с прошлой игры
     const existingLogos = document.querySelectorAll('.fallingLogo');
     existingLogos.forEach(logo => logo.remove());
 
-    // Очищаем старые таймеры перед запуском новых
     if (logoSpawnTimer) clearInterval(logoSpawnTimer);
     if (fallSpeedUpTimer) clearInterval(fallSpeedUpTimer);
     if (spawnRateUpTimer) clearInterval(spawnRateUpTimer);
 
-    // Запускаем игровые таймеры
     logoSpawnTimer = setInterval(createFallingLogo, currentLogoSpawnInterval);
     fallSpeedUpTimer = setInterval(increaseFallSpeed, fallSpeedIncreaseInterval);
     spawnRateUpTimer = setInterval(increaseSpawnRate, spawnRateIncreaseInterval);
@@ -374,52 +388,49 @@ function gameOver() {
     if (isGameOver) return;
     isGameOver = true;
 
-    playerData.totalPoints += currentScore; // Добавляем очки текущей игры к общим
-    savePlayerData(); // Сохраняем обновленные данные игрока
+    playerData.totalPoints += currentScore;
+    savePlayerData();
 
-    // Останавливаем все игровые таймеры
     clearInterval(logoSpawnTimer);
     clearInterval(fallSpeedUpTimer);
     clearInterval(spawnRateUpTimer);
 
-    alert(`Your score for this game: ${currentScore}`); // Показываем очки за текущую игру
+    alert(`Your score for this game: ${currentScore}`);
 
-    // Очищаем оставшиеся логотипы (если есть)
     const allLogos = document.querySelectorAll('.fallingLogo');
     allLogos.forEach(logoEl => {
         if (logoEl.parentElement) logoEl.remove();
     });
     
-    // Возвращаемся в главное меню после игры
     setTimeout(() => {
         showScreen(mainMenuScreen);
-    }, 500); // Небольшая задержка перед переходом в меню
+    }, 500); 
 }
 
-// --- Инициализация и обработчики событий меню ---
 window.onload = () => {
-    // Проверка наличия всех основных элементов перед настройкой
     if (!mainMenuScreen || !shopScreen || !gameContainer || !startButton || !shopButton || !backToMenuButton) {
-        console.error("CRITICAL: One or more main screen/button elements are missing from the DOM. Check HTML IDs.");
-        // Можно вывести сообщение пользователю, если критические элементы отсутствуют
         document.body.innerHTML = "<p style='color:red; font-size:20px; text-align:center; padding-top: 50px;'>Error: Game interface elements are missing.<br>Please check the HTML structure and element IDs.</p>";
-        return; // Прерываем выполнение, если нет основных элементов интерфейса
+        return;
     }
 
-    loadPlayerData(); // Загружаем данные игрока при старте
+    loadPlayerData(); 
 
     startButton.onclick = () => {
-        initGameScreen(); // Инициализируем и показываем игровой экран
+        initGameScreen();
     };
     
     shopButton.onclick = () => {
-        renderShop(); // Отрисовываем магазин перед показом
-        showScreen(shopScreen); // Показываем экран магазина
+        renderShop();
+        showScreen(shopScreen);
     };
     
     backToMenuButton.onclick = () => {
         showScreen(mainMenuScreen);
     };
     
-    showScreen(mainMenuScreen); // Показываем главное меню при загрузке
+    if (playerCloud && playerCloud.offsetWidth > 0) {
+        playerCloudWidth = playerCloud.offsetWidth;
+    }
+
+    showScreen(mainMenuScreen);
 };

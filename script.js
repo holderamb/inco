@@ -46,11 +46,11 @@ let isGameOver = false;
 // <<< ИЗМЕНЯЕМ НАЗВАНИЯ СКИНОВ ЗДЕСЬ >>>
 const SKINS_DATA = [
     { id: 'default_cloud', name: 'Comfy', price: 0, image: 'cloud.png' },
-    { id: 'skin1_cloud', name: 'Good-natured', price: 1000, image: 'cloud_skin1.png' },
-    { id: 'skin2_cloud', name: 'Terminator', price: 2000, image: 'cloud_skin2.png' },
-    { id: 'skin3_cloud', name: 'Swordsman', price: 3000, image: 'cloud_skin3.png' },
-    { id: 'skin4_cloud', name: 'Magician', price: 4000, image: 'cloud_skin4.png' },
-    { id: 'skin5_cloud', name: 'Mad Scientist', price: 5000, image: 'cloud_skin5.png' }
+    { id: 'skin1_cloud', name: 'Good-natured', price: 200, image: 'cloud_skin1.png' },
+    { id: 'skin2_cloud', name: 'Terminator', price: 500, image: 'cloud_skin2.png' },
+    { id: 'skin3_cloud', name: 'Swordsman', price: 700, image: 'cloud_skin3.png' },
+    { id: 'skin4_cloud', name: 'Magician', price: 1000, image: 'cloud_skin4.png' },
+    { id: 'skin5_cloud', name: 'Mad Scientist', price: 1200, image: 'cloud_skin5.png' }
 ];
 // <<< КОНЕЦ ИЗМЕНЕНИЙ НАЗВАНИЙ СКИНОВ >>>
 

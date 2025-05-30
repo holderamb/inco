@@ -44,11 +44,11 @@ let isGameOver = false;
 
 const SKINS_DATA = [
     { id: 'default_cloud', name: 'Default Cloud', price: 0, image: 'cloud.png' },
-    { id: 'skin1_cloud', name: 'Aqua Burst', price: 1, image: 'cloud_skin1.png' },
-    { id: 'skin2_cloud', name: 'Golden Haze', price: 2, image: 'cloud_skin2.png' },
-    { id: 'skin3_cloud', name: 'Shadow Puff', price: 3, image: 'cloud_skin3.png' },
-    { id: 'skin4_cloud', name: 'Crimson Flash', price: 4, image: 'cloud_skin4.png' },
-    { id: 'skin5_cloud', name: 'Emerald Mist', price: 5, image: 'cloud_skin5.png' }
+    { id: 'skin1_cloud', name: 'Aqua Burst', price: 200, image: 'cloud_skin1.png' },
+    { id: 'skin2_cloud', name: 'Golden Haze', price: 500, image: 'cloud_skin2.png' },
+    { id: 'skin3_cloud', name: 'Shadow Puff', price: 700, image: 'cloud_skin3.png' },
+    { id: 'skin4_cloud', name: 'Crimson Flash', price: 1000, image: 'cloud_skin4.png' },
+    { id: 'skin5_cloud', name: 'Emerald Mist', price: 1200, image: 'cloud_skin5.png' }
 ];
 
 let playerData = {

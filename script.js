@@ -42,14 +42,17 @@ let fallSpeedUpTimer;
 let spawnRateUpTimer;
 let isGameOver = false;
 
+// --- Данные игрока и скины ---
+// <<< ИЗМЕНЯЕМ НАЗВАНИЯ СКИНОВ ЗДЕСЬ >>>
 const SKINS_DATA = [
-    { id: 'default_cloud', name: 'Default Cloud', price: 0, image: 'cloud.png' },
-    { id: 'skin1_cloud', name: 'Aqua Burst', price: 200, image: 'cloud_skin1.png' },
-    { id: 'skin2_cloud', name: 'Golden Haze', price: 500, image: 'cloud_skin2.png' },
-    { id: 'skin3_cloud', name: 'Shadow Puff', price: 700, image: 'cloud_skin3.png' },
-    { id: 'skin4_cloud', name: 'Crimson Flash', price: 1000, image: 'cloud_skin4.png' },
-    { id: 'skin5_cloud', name: 'Emerald Mist', price: 1200, image: 'cloud_skin5.png' }
+    { id: 'default_cloud', name: 'Comfy', price: 0, image: 'cloud.png' },
+    { id: 'skin1_cloud', name: 'Good-natured', price: 1000, image: 'cloud_skin1.png' },
+    { id: 'skin2_cloud', name: 'Terminator', price: 2000, image: 'cloud_skin2.png' },
+    { id: 'skin3_cloud', name: 'Swordsman', price: 3000, image: 'cloud_skin3.png' },
+    { id: 'skin4_cloud', name: 'Magician', price: 4000, image: 'cloud_skin4.png' },
+    { id: 'skin5_cloud', name: 'Mad Scientist', price: 5000, image: 'cloud_skin5.png' }
 ];
+// <<< КОНЕЦ ИЗМЕНЕНИЙ НАЗВАНИЙ СКИНОВ >>>
 
 let playerData = {
     totalPoints: 0,
@@ -57,10 +60,9 @@ let playerData = {
     selectedSkinId: 'default_cloud'
 };
 
-// --- Настройки для "внутреннего" хитбокса облака ---
-// <<< УВЕЛИЧИВАЕМ ОТСТУПЫ ЗНАЧИТЕЛЬНО >>>
-const CLOUD_HITBOX_PADDING_X = 35; // Было 20, потом 30. Для облака 120px шириной, это оставит 120 - (2*35) = 50px ширины хитбокса.
-const CLOUD_HITBOX_PADDING_Y = 20; // Было 10, потом 15. Для облака 72px высотой, это оставит 72 - (2*20) = 32px высоты хитбокса.
+// Настройки для "внутреннего" хитбокса облака
+const CLOUD_HITBOX_PADDING_X = 35; 
+const CLOUD_HITBOX_PADDING_Y = 20; 
 
 
 function savePlayerData() {
@@ -122,10 +124,10 @@ function renderShop() {
 
         const skinImage = document.createElement('img');
         skinImage.src = skin.image;
-        skinImage.alt = skin.name;
+        skinImage.alt = skin.name; // alt текст тоже обновится
 
         const skinName = document.createElement('p');
-        skinName.textContent = skin.name;
+        skinName.textContent = skin.name; // Здесь будет новое название
 
         const skinPrice = document.createElement('p');
         if (playerData.unlockedSkins.includes(skin.id)) {
@@ -262,7 +264,7 @@ function moveLogo(logo) {
         if (logoTop < gameAreaHeight) {
             logoTop += logoFallSpeed;
             logo.style.top = logoTop + 'px';
-            if (checkCollision(playerCloud, logo)) { // Вызов checkCollision
+            if (checkCollision(playerCloud, logo)) { 
                 if (!isGameOver) gameOver();
                 clearInterval(moveInterval);
                 if (logo.parentElement) logo.remove();
@@ -276,7 +278,6 @@ function moveLogo(logo) {
     }, 20);
 }
 
-// --- ИЗМЕНЕННАЯ ФУНКЦИЯ ПРОВЕРКИ СТОЛКНОВЕНИЙ С ЛОГИРОВАНИЕМ ---
 function checkCollision(cloud, logo) {
     if (!cloud || !logo) return false;
     
@@ -291,18 +292,17 @@ function checkCollision(cloud, logo) {
     };
 
     if (cloudHitbox.left >= cloudHitbox.right || cloudHitbox.top >= cloudHitbox.bottom) {
-        // console.warn("Cloud hitbox is invalid, using full rect.");
         const isCollidingFull = !(
             cloudRect.top > logoRect.bottom ||
             cloudRect.right < logoRect.left ||
             cloudRect.bottom < logoRect.top ||
             cloudRect.left > logoRect.right
         );
-        if (isCollidingFull) {
-            console.log("--- COLLISION (Full Rect Fallback) ---");
-            console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
-            console.log("Logo Rect:", JSON.stringify(logoRect));
-        }
+        // if (isCollidingFull) { // Закомментируем отладочные логи, если не нужны
+        //     console.log("--- COLLISION (Full Rect Fallback) ---");
+        //     console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
+        //     console.log("Logo Rect:", JSON.stringify(logoRect));
+        // }
         return isCollidingFull;
     }
     
@@ -313,17 +313,16 @@ function checkCollision(cloud, logo) {
         cloudHitbox.left > logoRect.right
     );
 
-    if (isCollidingPadded) { // <<< ЛОГИРОВАНИЕ ТОЛЬКО ПРИ ОБНАРУЖЕНИИ СТОЛКНОВЕНИЯ
-        console.log("--- COLLISION DETECTED (Padded Hitbox) ---");
-        console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
-        console.log("Cloud Padded Hitbox:", JSON.stringify(cloudHitbox));
-        console.log("Logo Rect:", JSON.stringify(logoRect));
-        console.log("Current Score:", currentScore);
-    }
+    // if (isCollidingPadded) { // Закомментируем отладочные логи, если не нужны
+    //     console.log("--- COLLISION DETECTED (Padded Hitbox) ---");
+    //     console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
+    //     console.log("Cloud Padded Hitbox:", JSON.stringify(cloudHitbox));
+    //     console.log("Logo Rect:", JSON.stringify(logoRect));
+    //     console.log("Current Score:", currentScore);
+    // }
     
     return isCollidingPadded;
 }
-// --- КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ ---
 
 function updateCurrentScore(points) {
     currentScore += points;

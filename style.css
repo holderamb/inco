@@ -152,17 +152,19 @@ body {
     height: 72px; 
     background-size: contain;
     background-repeat: no-repeat;
+    background-position: center;
     position: absolute;
-    bottom: 10px; 
+    bottom: 10px;
+    box-sizing: border-box;
 }
 
-.fallingLogo {
-    width: 30px;
-    height: 30px;
+.fallingObject { 
+    /* width и height будут задаваться через JS */
     background-size: contain;
     background-repeat: no-repeat;
+    background-position: center;
     position: absolute;
-    top: -40px;
+    box-sizing: border-box;
 }
 
 #scoreBoard {

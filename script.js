@@ -17,42 +17,55 @@ const scoreDisplay = document.getElementById('score');
 // --- Настройки игры (основные) ---
 let currentScore = 0;
 const playerSpeed = 25;
-const LOGO_WIDTH = 30;
-const LOGO_HEIGHT = 30;
 
-const logoFallSpeedStart = 1.5;
+// Видимые размеры для объектов
+const PEPE_VISIBLE_WIDTH = 30;
+const PEPE_VISIBLE_HEIGHT = 30;
+const COLLECTIBLE_LOGO_VISIBLE_WIDTH = 35; 
+const COLLECTIBLE_LOGO_VISIBLE_HEIGHT = 35;
+
+// Отступы для хитбоксов падающих объектов
+const PEPE_HITBOX_PADDING_X = 5; 
+const PEPE_HITBOX_PADDING_Y = 5; 
+const COLLECTIBLE_LOGO_HITBOX_PADDING_X = 0; 
+const COLLECTIBLE_LOGO_HITBOX_PADDING_Y = 0; 
+
+const POINTS_FOR_DODGED_PEPE = 1;
+const POINTS_FOR_COLLECTED_LOGO = 5;
+const SPAWN_COLLECTIBLE_LOGO_PROBABILITY = 0.25;
+
+const logoFallSpeedStart = 1.5; 
 let logoFallSpeed = logoFallSpeedStart;
 const fallSpeedIncreaseInterval = 9000;
 const fallSpeedIncreaseAmount = 0.25;
 
-const logoSpawnIntervalStart = 700;
-let currentLogoSpawnInterval = logoSpawnIntervalStart;
+const objectSpawnIntervalStart = 700; 
+let currentObjectSpawnInterval = objectSpawnIntervalStart;
 const spawnRateIncreaseInterval = 12000;
 const spawnIntervalDecreaseAmount = 50;
-const minLogoSpawnInterval = 250;
+const minObjectSpawnInterval = 250;
 
 let gameAreaWidth = 0;
 let gameAreaHeight = 0;
 let playerCloudWidth = 0; 
 
-const fallingLogoImages = ['logo1.png', 'logo2.png', 'logo3.png'];
+const pepeImages = ['pepe1.png', 'pepe2.png', 'pepe3.png']; 
+const collectibleLogoImage = 'logo.png'; 
 
-let logoSpawnTimer;
+let objectSpawnTimer; 
 let fallSpeedUpTimer;
 let spawnRateUpTimer;
 let isGameOver = false;
 
-// --- Данные игрока и скины ---
-// <<< ИЗМЕНЯЕМ НАЗВАНИЯ СКИНОВ ЗДЕСЬ >>>
 const SKINS_DATA = [
     { id: 'default_cloud', name: 'Comfy', price: 0, image: 'cloud.png' },
     { id: 'skin1_cloud', name: 'Good-natured', price: 200, image: 'cloud_skin1.png' },
     { id: 'skin2_cloud', name: 'Terminator', price: 500, image: 'cloud_skin2.png' },
     { id: 'skin3_cloud', name: 'Swordsman', price: 700, image: 'cloud_skin3.png' },
     { id: 'skin4_cloud', name: 'Magician', price: 1000, image: 'cloud_skin4.png' },
-    { id: 'skin5_cloud', name: 'Mad Scientist', price: 1200, image: 'cloud_skin5.png' }
+    { id: 'skin5_cloud', name: 'Mad Scientist', price: 1200, image: 'cloud_skin5.png' },
+    { id: 'skin6_tyson', name: 'Tyson', price: 1500, image: 'cloud_skin6.png' }
 ];
-// <<< КОНЕЦ ИЗМЕНЕНИЙ НАЗВАНИЙ СКИНОВ >>>
 
 let playerData = {
     totalPoints: 0,
@@ -60,10 +73,11 @@ let playerData = {
     selectedSkinId: 'default_cloud'
 };
 
-// Настройки для "внутреннего" хитбокса облака
-const CLOUD_HITBOX_PADDING_X = 35; 
-const CLOUD_HITBOX_PADDING_Y = 20; 
+// Отступы для хитбокса облака игрока
+const CLOUD_HITBOX_PADDING_X = 25; // <<< ИЗМЕНЕНО: Уменьшен отступ (хитбокс облака стал шире)
+const CLOUD_HITBOX_PADDING_Y = 15; // <<< ИЗМЕНЕНО: Уменьшен отступ (хитбокс облака стал выше)
 
+// ... (остальные функции: savePlayerData, loadPlayerData, showScreen, renderShop, buySkin, selectSkin, updatePlayerCloudSkin, управление облаком, createFallingObject, moveFallingObject, checkCollision, updateCurrentScore, increaseFallSpeed, increaseSpawnRate, initGameScreen, gameOver, window.onload остаются такими же, как в предыдущем полном файле) ...
 
 function savePlayerData() {
     try {
@@ -124,21 +138,21 @@ function renderShop() {
 
         const skinImage = document.createElement('img');
         skinImage.src = skin.image;
-        skinImage.alt = skin.name; // alt текст тоже обновится
+        skinImage.alt = skin.name;
 
         const skinName = document.createElement('p');
-        skinName.textContent = skin.name; // Здесь будет новое название
+        skinName.textContent = skin.name;
 
-        const skinPrice = document.createElement('p');
+        const skinPriceDisplay = document.createElement('p');
         if (playerData.unlockedSkins.includes(skin.id)) {
-            skinPrice.textContent = 'Unlocked';
+            skinPriceDisplay.textContent = 'Unlocked';
         } else {
-            skinPrice.textContent = `Price: ${skin.price} pts`;
+            skinPriceDisplay.textContent = `Price: ${skin.price} pts`;
         }
         
         skinItem.appendChild(skinImage);
         skinItem.appendChild(skinName);
-        skinItem.appendChild(skinPrice);
+        skinItem.appendChild(skinPriceDisplay);
 
         const actionButton = document.createElement('button');
         if (playerData.unlockedSkins.includes(skin.id)) {
@@ -239,89 +253,147 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-function createFallingLogo() {
+function createFallingObject() {
     if (isGameOver || !gameArea) return;
-    const logo = document.createElement('div');
-    logo.classList.add('fallingLogo');
-    if (fallingLogoImages.length === 0) return;
-    const randomLogoImage = fallingLogoImages[Math.floor(Math.random() * fallingLogoImages.length)];
-    logo.style.backgroundImage = `url('${randomLogoImage}')`;
-    const randomX = Math.floor(Math.random() * (gameAreaWidth - LOGO_WIDTH));
-    logo.style.left = randomX + 'px';
-    logo.style.top = `-${LOGO_HEIGHT + 10}px`;
-    gameArea.appendChild(logo);
-    moveLogo(logo);
+
+    const objectElement = document.createElement('div');
+    objectElement.classList.add('fallingObject'); 
+
+    let objectType;
+    let imageUrl;
+    let visibleWidth;
+    let visibleHeight;
+    let hitboxPaddingX;
+    let hitboxPaddingY;
+
+    if (Math.random() < SPAWN_COLLECTIBLE_LOGO_PROBABILITY) {
+        objectType = 'collectible';
+        imageUrl = collectibleLogoImage;
+        visibleWidth = COLLECTIBLE_LOGO_VISIBLE_WIDTH;
+        visibleHeight = COLLECTIBLE_LOGO_VISIBLE_HEIGHT;
+        hitboxPaddingX = COLLECTIBLE_LOGO_HITBOX_PADDING_X;
+        hitboxPaddingY = COLLECTIBLE_LOGO_HITBOX_PADDING_Y;
+    } else {
+        objectType = 'pepe';
+        if (pepeImages.length > 0) {
+            imageUrl = pepeImages[Math.floor(Math.random() * pepeImages.length)];
+        } else {
+            return; 
+        }
+        visibleWidth = PEPE_VISIBLE_WIDTH;
+        visibleHeight = PEPE_VISIBLE_HEIGHT;
+        hitboxPaddingX = PEPE_HITBOX_PADDING_X;
+        hitboxPaddingY = PEPE_HITBOX_PADDING_Y;
+    }
+
+    objectElement.dataset.type = objectType; 
+    objectElement.dataset.hitboxPaddingX = hitboxPaddingX;
+    objectElement.dataset.hitboxPaddingY = hitboxPaddingY;
+    objectElement.style.backgroundImage = `url('${imageUrl}')`;
+    objectElement.style.width = `${visibleWidth}px`;
+    objectElement.style.height = `${visibleHeight}px`;
+    
+    const randomX = Math.floor(Math.random() * (gameAreaWidth - visibleWidth));
+    objectElement.style.left = randomX + 'px';
+    objectElement.style.top = `-${visibleHeight + 10}px`;
+    
+    gameArea.appendChild(objectElement);
+    moveFallingObject(objectElement); 
 }
 
-function moveLogo(logo) {
-    let logoTop = parseInt(logo.style.top);
+function moveFallingObject(objectElement) { 
+    let objectTop = parseInt(objectElement.style.top);
+    const objectType = objectElement.dataset.type;
+
     const moveInterval = setInterval(() => {
         if (isGameOver) {
             clearInterval(moveInterval);
-            if (logo.parentElement) logo.remove();
+            if (objectElement.parentElement) objectElement.remove();
             return;
         }
-        if (logoTop < gameAreaHeight) {
-            logoTop += logoFallSpeed;
-            logo.style.top = logoTop + 'px';
-            if (checkCollision(playerCloud, logo)) { 
-                if (!isGameOver) gameOver();
+
+        if (objectTop < gameAreaHeight) {
+            objectTop += logoFallSpeed; 
+            objectElement.style.top = objectTop + 'px';
+
+            if (checkCollision(playerCloud, objectElement)) { 
+                if (objectType === 'pepe') {
+                    if (!isGameOver) gameOver();
+                } else if (objectType === 'collectible') {
+                    updateCurrentScore(POINTS_FOR_COLLECTED_LOGO);
+                }
                 clearInterval(moveInterval);
-                if (logo.parentElement) logo.remove();
-                return;
+                if (objectElement.parentElement) objectElement.remove();
+                return; 
             }
-        } else {
-            if (logo.parentElement) logo.remove();
+        } else { 
+            if (objectType === 'pepe') {
+                if (!isGameOver) updateCurrentScore(POINTS_FOR_DODGED_PEPE);
+            }
             clearInterval(moveInterval);
-            if (!isGameOver) updateCurrentScore(1);
+            if (objectElement.parentElement) objectElement.remove();
         }
     }, 20);
 }
 
-function checkCollision(cloud, logo) {
-    if (!cloud || !logo) return false;
+function checkCollision(cloud, fallingObject) { 
+    if (!cloud || !fallingObject) return false;
     
+    // Получаем точные координаты через getBoundingClientRect
     const cloudRect = cloud.getBoundingClientRect();
-    const logoRect = logo.getBoundingClientRect();
-
+    const objectRect = fallingObject.getBoundingClientRect();
+    
+    // Применяем отступы для хитбоксов
     const cloudHitbox = {
-        top: cloudRect.top + CLOUD_HITBOX_PADDING_Y,
-        bottom: cloudRect.bottom - CLOUD_HITBOX_PADDING_Y,
         left: cloudRect.left + CLOUD_HITBOX_PADDING_X,
-        right: cloudRect.right - CLOUD_HITBOX_PADDING_X
+        right: cloudRect.right - CLOUD_HITBOX_PADDING_X,
+        top: cloudRect.top + CLOUD_HITBOX_PADDING_Y,
+        bottom: cloudRect.bottom - CLOUD_HITBOX_PADDING_Y
     };
 
+    const objectPaddingX = parseFloat(fallingObject.dataset.hitboxPaddingX) || 0;
+    const objectPaddingY = parseFloat(fallingObject.dataset.hitboxPaddingY) || 0;
+
+    const objectHitbox = {
+        left: objectRect.left + objectPaddingX,
+        right: objectRect.right - objectPaddingX,
+        top: objectRect.top + objectPaddingY,
+        bottom: objectRect.bottom - objectPaddingY
+    };
+    
+    // Проверка на некорректные хитбоксы
     if (cloudHitbox.left >= cloudHitbox.right || cloudHitbox.top >= cloudHitbox.bottom) {
-        const isCollidingFull = !(
-            cloudRect.top > logoRect.bottom ||
-            cloudRect.right < logoRect.left ||
-            cloudRect.bottom < logoRect.top ||
-            cloudRect.left > logoRect.right
-        );
-        // if (isCollidingFull) { // Закомментируем отладочные логи, если не нужны
-        //     console.log("--- COLLISION (Full Rect Fallback) ---");
-        //     console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
-        //     console.log("Logo Rect:", JSON.stringify(logoRect));
-        // }
-        return isCollidingFull;
+        cloudHitbox.left = cloudRect.left;
+        cloudHitbox.right = cloudRect.right;
+        cloudHitbox.top = cloudRect.top;
+        cloudHitbox.bottom = cloudRect.bottom;
     }
     
-    const isCollidingPadded = !(
-        cloudHitbox.top > logoRect.bottom ||
-        cloudHitbox.right < logoRect.left ||
-        cloudHitbox.bottom < logoRect.top ||
-        cloudHitbox.left > logoRect.right
-    );
-
-    // if (isCollidingPadded) { // Закомментируем отладочные логи, если не нужны
-    //     console.log("--- COLLISION DETECTED (Padded Hitbox) ---");
-    //     console.log("Cloud Full Rect:", JSON.stringify(cloudRect));
-    //     console.log("Cloud Padded Hitbox:", JSON.stringify(cloudHitbox));
-    //     console.log("Logo Rect:", JSON.stringify(logoRect));
-    //     console.log("Current Score:", currentScore);
-    // }
+    if (objectHitbox.left >= objectHitbox.right || objectHitbox.top >= objectHitbox.bottom) {
+        objectHitbox.left = objectRect.left;
+        objectHitbox.right = objectRect.right;
+        objectHitbox.top = objectRect.top;
+        objectHitbox.bottom = objectRect.bottom;
+    }
     
-    return isCollidingPadded;
+    // AABB (Axis-Aligned Bounding Box) коллизия - самый надежный метод
+    const isColliding = (
+        cloudHitbox.left < objectHitbox.right &&
+        cloudHitbox.right > objectHitbox.left &&
+        cloudHitbox.top < objectHitbox.bottom &&
+        cloudHitbox.bottom > objectHitbox.top
+    );
+    
+    // Отладочный вывод (временно)
+    if (Math.abs(cloudHitbox.left - objectHitbox.right) < 50 || Math.abs(cloudHitbox.right - objectHitbox.left) < 50) {
+        console.log('=== COLLISION DEBUG ===');
+        console.log('Cloud hitbox:', cloudHitbox);
+        console.log('Object hitbox:', objectHitbox);
+        console.log('Collision result:', isColliding);
+        console.log('Object type:', fallingObject.dataset.type);
+    }
+    
+    return isColliding;
 }
 
 function updateCurrentScore(points) {
@@ -336,9 +408,9 @@ function increaseFallSpeed() {
 
 function increaseSpawnRate() {
     if (isGameOver) return;
-    currentLogoSpawnInterval = Math.max(minLogoSpawnInterval, currentLogoSpawnInterval - spawnIntervalDecreaseAmount);
-    clearInterval(logoSpawnTimer);
-    logoSpawnTimer = setInterval(createFallingLogo, currentLogoSpawnInterval);
+    currentObjectSpawnInterval = Math.max(minObjectSpawnInterval, currentObjectSpawnInterval - spawnIntervalDecreaseAmount);
+    clearInterval(objectSpawnTimer); 
+    objectSpawnTimer = setInterval(createFallingObject, currentObjectSpawnInterval); 
 }
 
 function initGameScreen() {
@@ -352,7 +424,7 @@ function initGameScreen() {
     scoreDisplay.textContent = currentScore;
 
     logoFallSpeed = logoFallSpeedStart;
-    currentLogoSpawnInterval = logoSpawnIntervalStart;
+    currentObjectSpawnInterval = objectSpawnIntervalStart; 
 
     gameAreaWidth = gameArea.offsetWidth;
     gameAreaHeight = gameArea.offsetHeight;
@@ -371,14 +443,14 @@ function initGameScreen() {
         playerCloud.style.left = initialPlayerLeft + 'px';
     }
 
-    const existingLogos = document.querySelectorAll('.fallingLogo');
-    existingLogos.forEach(logo => logo.remove());
+    const existingObjects = document.querySelectorAll('.fallingObject'); 
+    existingObjects.forEach(obj => obj.remove());
 
-    if (logoSpawnTimer) clearInterval(logoSpawnTimer);
+    if (objectSpawnTimer) clearInterval(objectSpawnTimer); 
     if (fallSpeedUpTimer) clearInterval(fallSpeedUpTimer);
     if (spawnRateUpTimer) clearInterval(spawnRateUpTimer);
 
-    logoSpawnTimer = setInterval(createFallingLogo, currentLogoSpawnInterval);
+    objectSpawnTimer = setInterval(createFallingObject, currentObjectSpawnInterval); 
     fallSpeedUpTimer = setInterval(increaseFallSpeed, fallSpeedIncreaseInterval);
     spawnRateUpTimer = setInterval(increaseSpawnRate, spawnRateIncreaseInterval);
 }
@@ -390,15 +462,15 @@ function gameOver() {
     playerData.totalPoints += currentScore;
     savePlayerData();
 
-    clearInterval(logoSpawnTimer);
+    clearInterval(objectSpawnTimer); 
     clearInterval(fallSpeedUpTimer);
     clearInterval(spawnRateUpTimer);
 
     alert(`Your score for this game: ${currentScore}`);
 
-    const allLogos = document.querySelectorAll('.fallingLogo');
-    allLogos.forEach(logoEl => {
-        if (logoEl.parentElement) logoEl.remove();
+    const allFallingObjects = document.querySelectorAll('.fallingObject'); 
+    allFallingObjects.forEach(obj => {
+        if (obj.parentElement) obj.remove();
     });
     
     setTimeout(() => {

@@ -11,6 +11,7 @@
         <h1>ComfyGame</h1> <!-- Название в меню изменено на ComfyGame -->
         <button id="startButton">Start Game</button>
         <button id="shopButton">Shop</button>
+        <button id="musicToggleButton">Music: On</button>
         <div class="holderamb-credit">holderamb</div>
     </div>
 
@@ -24,6 +25,7 @@
     </div>
 
     <div id="gameContainer" style="display: none;">
+        <button id="musicToggleButtonGame" style="position:absolute;top:10px;right:10px;z-index:10;">Music: On</button>
         <div id="gameArea">
             <div id="playerCloud">
                 <!-- Изображение облака будет меняться через JS/CSS -->
@@ -32,6 +34,8 @@
         </div>
         <div id="scoreBoard">Score: <span id="score">0</span></div>
     </div>
+
+    <audio id="bgMusic" src="sounds/bg_music.mp3" loop></audio>
 
     <script src="script.js"></script>
 </body>

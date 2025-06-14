@@ -77,6 +77,54 @@ let playerData = {
 const CLOUD_HITBOX_PADDING_X = 25; // <<< ИЗМЕНЕНО: Уменьшен отступ (хитбокс облака стал шире)
 const CLOUD_HITBOX_PADDING_Y = 15; // <<< ИЗМЕНЕНО: Уменьшен отступ (хитбокс облака стал выше)
 
+// === АУДИО ===
+const bgMusic = document.getElementById('bgMusic');
+let musicEnabled = true;
+const musicToggleButton = document.getElementById('musicToggleButton');
+const musicToggleButtonGame = document.getElementById('musicToggleButtonGame');
+
+// Звуки событий
+const startSound = new Audio('sounds/start.mp3');
+const pickupSound = new Audio('sounds/pickup.mp3');
+const loseSound = new Audio('sounds/lose.mp3');
+
+function updateMusicButtonUI() {
+    if (musicToggleButton) musicToggleButton.textContent = 'Music: ' + (musicEnabled ? 'On' : 'Off');
+    if (musicToggleButtonGame) musicToggleButtonGame.textContent = 'Music: ' + (musicEnabled ? 'On' : 'Off');
+}
+
+function playBgMusic() {
+    if (musicEnabled && bgMusic) {
+        bgMusic.volume = 0.5;
+        bgMusic.play();
+    }
+}
+function stopBgMusic() {
+    if (bgMusic) bgMusic.pause();
+}
+
+function playSound(sound) {
+    if (musicEnabled && sound) {
+        sound.currentTime = 0;
+        sound.play();
+    }
+}
+
+if (musicToggleButton) {
+    musicToggleButton.onclick = () => {
+        musicEnabled = !musicEnabled;
+        updateMusicButtonUI();
+        if (musicEnabled) playBgMusic(); else stopBgMusic();
+    };
+}
+if (musicToggleButtonGame) {
+    musicToggleButtonGame.onclick = () => {
+        musicEnabled = !musicEnabled;
+        updateMusicButtonUI();
+        if (musicEnabled) playBgMusic(); else stopBgMusic();
+    };
+}
+
 // ... (остальные функции: savePlayerData, loadPlayerData, showScreen, renderShop, buySkin, selectSkin, updatePlayerCloudSkin, управление облаком, createFallingObject, moveFallingObject, checkCollision, updateCurrentScore, increaseFallSpeed, increaseSpawnRate, initGameScreen, gameOver, window.onload остаются такими же, как в предыдущем полном файле) ...
 
 function savePlayerData() {
@@ -321,6 +369,7 @@ function moveFallingObject(objectElement) {
                     if (!isGameOver) gameOver();
                 } else if (objectType === 'collectible') {
                     updateCurrentScore(POINTS_FOR_COLLECTED_LOGO);
+                    playSound(pickupSound);
                 }
                 clearInterval(moveInterval);
                 if (objectElement.parentElement) objectElement.remove();
@@ -453,6 +502,9 @@ function initGameScreen() {
     objectSpawnTimer = setInterval(createFallingObject, currentObjectSpawnInterval); 
     fallSpeedUpTimer = setInterval(increaseFallSpeed, fallSpeedIncreaseInterval);
     spawnRateUpTimer = setInterval(increaseSpawnRate, spawnRateIncreaseInterval);
+
+    playBgMusic();
+    playSound(startSound);
 }
 
 function gameOver() {
@@ -473,6 +525,9 @@ function gameOver() {
         if (obj.parentElement) obj.remove();
     });
     
+    stopBgMusic();
+    playSound(loseSound);
+
     setTimeout(() => {
         showScreen(mainMenuScreen);
     }, 500); 
@@ -504,4 +559,7 @@ window.onload = () => {
     }
 
     showScreen(mainMenuScreen);
+
+    updateMusicButtonUI();
+    playBgMusic();
 };

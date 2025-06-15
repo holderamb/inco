@@ -599,11 +599,19 @@ async function sendScoreToServer(nickname, score) {
 async function showLeaderboard() {
     const res = await fetch(SERVER_URL + '/leaderboard');
     const top = await res.json();
-    let html = '<h2>Leaderboard</h2><ol>';
-    top.forEach(user => {
-        html += `<li>${user.nickname}: ${user.score}</li>`;
+    let html = '<h2>Leaderboard</h2><ul class="leaderboard-list">';
+    top.forEach((user, i) => {
+        let rankClass = '';
+        if (i === 0) rankClass = 'rank-1';
+        else if (i === 1) rankClass = 'rank-2';
+        else if (i === 2) rankClass = 'rank-3';
+        html += `<li class="leaderboard-item">
+            <span class="leaderboard-rank ${rankClass}">${i + 1}</span>
+            <span class="leaderboard-nick">${user.nickname}</span>
+            <span class="leaderboard-score">${user.score}</span>
+        </li>`;
     });
-    html += '</ol><button onclick="document.getElementById(\'leaderboardModal\').style.display=\'none\'">Close</button>';
+    html += '</ul><button onclick="document.getElementById(\'leaderboardModal\').style.display=\'none\'" class="leaderboard-btn" style="position:static; margin-top:20px;">Close</button>';
     document.getElementById('leaderboardContent').innerHTML = html;
     document.getElementById('leaderboardModal').style.display = 'flex';
 }

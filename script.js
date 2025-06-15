@@ -537,7 +537,7 @@ function gameOver() {
     }
 }
 
-const SERVER_URL = 'ВАШ_URL_СЕРВЕРА'; // например, https://incogame-server.onrender.com
+const SERVER_URL = 'https://incoserver1.onrender.com'; 
 
 let playerNickname = localStorage.getItem('incogameNickname') || null;
 
@@ -603,8 +603,9 @@ async function showLeaderboard() {
     top.forEach(user => {
         html += `<li>${user.nickname}: ${user.score}</li>`;
     });
-    html += '</ol>';
-    // Покажите это в модальном окне или отдельном экране
+    html += '</ol><button onclick="document.getElementById(\'leaderboardModal\').style.display=\'none\'">Close</button>';
+    document.getElementById('leaderboardContent').innerHTML = html;
+    document.getElementById('leaderboardModal').style.display = 'flex';
 }
 
 window.onload = async () => {
@@ -640,4 +641,6 @@ window.onload = async () => {
     if (!playerNickname) {
         await showNicknameModal();
     }
+
+    document.getElementById('leaderboardButton').onclick = showLeaderboard;
 };

@@ -531,9 +531,83 @@ function gameOver() {
     setTimeout(() => {
         showScreen(mainMenuScreen);
     }, 500); 
+
+    if (playerNickname) {
+        sendScoreToServer(playerNickname, currentScore);
+    }
 }
 
-window.onload = () => {
+const SERVER_URL = 'ВАШ_URL_СЕРВЕРА'; // например, https://incogame-server.onrender.com
+
+let playerNickname = localStorage.getItem('incogameNickname') || null;
+
+async function showNicknameModal() {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('nicknameModal');
+        const input = document.getElementById('nicknameInput');
+        const error = document.getElementById('nicknameError');
+        const submit = document.getElementById('nicknameSubmit');
+        modal.style.display = 'flex';
+        input.value = '';
+        error.textContent = '';
+        input.focus();
+
+        submit.onclick = async () => {
+            const nickname = input.value.trim();
+            if (nickname.length < 3) {
+                error.textContent = 'Nickname too short!';
+                return;
+            }
+            // Проверка уникальности на сервере
+            try {
+                const res = await fetch(SERVER_URL + '/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nickname })
+                });
+                if (res.status === 409) {
+                    error.textContent = 'Nickname already taken!';
+                    return;
+                }
+                if (!res.ok) {
+                    error.textContent = 'Error. Try another nickname.';
+                    return;
+                }
+                localStorage.setItem('incogameNickname', nickname);
+                playerNickname = nickname;
+                modal.style.display = 'none';
+                resolve(nickname);
+            } catch (e) {
+                error.textContent = 'Server error!';
+            }
+        };
+    });
+}
+
+async function sendScoreToServer(nickname, score) {
+    try {
+        await fetch(SERVER_URL + '/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nickname, score })
+        });
+    } catch (e) {
+        console.error('Failed to send score:', e);
+    }
+}
+
+async function showLeaderboard() {
+    const res = await fetch(SERVER_URL + '/leaderboard');
+    const top = await res.json();
+    let html = '<h2>Leaderboard</h2><ol>';
+    top.forEach(user => {
+        html += `<li>${user.nickname}: ${user.score}</li>`;
+    });
+    html += '</ol>';
+    // Покажите это в модальном окне или отдельном экране
+}
+
+window.onload = async () => {
     if (!mainMenuScreen || !shopScreen || !gameContainer || !startButton || !shopButton || !backToMenuButton) {
         document.body.innerHTML = "<p style='color:red; font-size:20px; text-align:center; padding-top: 50px;'>Error: Game interface elements are missing.<br>Please check the HTML structure and element IDs.</p>";
         return;
@@ -562,4 +636,8 @@ window.onload = () => {
 
     updateMusicButtonUI();
     playBgMusic();
+
+    if (!playerNickname) {
+        await showNicknameModal();
+    }
 };

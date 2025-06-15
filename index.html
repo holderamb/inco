@@ -35,6 +35,15 @@
         <div id="scoreBoard">Score: <span id="score">0</span></div>
     </div>
 
+    <div id="nicknameModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+      <div style="background:#fff; padding:30px; border-radius:10px; text-align:center; min-width:300px;">
+        <h2>Enter your nickname</h2>
+        <input id="nicknameInput" type="text" maxlength="16" style="font-size:18px; padding:5px; width:80%;" />
+        <div id="nicknameError" style="color:red; margin:10px 0;"></div>
+        <button id="nicknameSubmit" style="font-size:18px; padding:8px 20px;">OK</button>
+      </div>
+    </div>
+
     <audio id="bgMusic" src="sounds/bg_music.mp3" loop></audio>
 
     <script src="script.js"></script>
